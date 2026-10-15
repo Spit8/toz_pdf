@@ -1,4 +1,4 @@
-# toz_pdf
+# PDF to JPEG
 
 Convertit chaque page d’un PDF en fichier `.jpeg`, puis rogne automatiquement les marges claires (y compris le bord sombre typique d’une page scannée).
 

@@ -19,6 +19,7 @@ input/**
 samples/**
 !samples/.gitkeep
 *.pdf
+!README.pdf
 
 # App outputs
 output/**
