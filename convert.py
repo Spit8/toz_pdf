@@ -16,6 +16,7 @@ DEFAULT_PADDING = 8
 DEFAULT_QUALITY = 90
 DEFAULT_THRESHOLD = 245
 DEFAULT_TOLERANCE = 20
+DEFAULT_HEIGHT = 890
 
 
 def list_pdfs_in_dir(folder: Path) -> list[Path]:
@@ -91,6 +92,14 @@ def pixmap_to_image(pix: pymupdf.Pixmap) -> Image.Image:
     return Image.frombytes(mode, (pix.width, pix.height), pix.samples)
 
 
+def resize_to_height(image: Image.Image, height: int) -> Image.Image:
+    """Redimensionne pour que la hauteur soit *height*, proportions conservees."""
+    if height <= 0 or image.height == height:
+        return image
+    new_width = max(1, round(image.width * (height / image.height)))
+    return image.resize((new_width, height), Image.Resampling.LANCZOS)
+
+
 def convert_pdf(
     pdf_path: Path,
     out_dir: Path,
@@ -99,6 +108,7 @@ def convert_pdf(
     quality: int = DEFAULT_QUALITY,
     threshold: int = DEFAULT_THRESHOLD,
     tolerance: int = DEFAULT_TOLERANCE,
+    height: int | None = None,
 ) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
@@ -116,6 +126,9 @@ def convert_pdf(
             )
             if bbox is not None:
                 image = image.crop(bbox)
+
+            if height is not None and height > 0:
+                image = resize_to_height(image, height)
 
             dest = out_dir / f"page_{index:03d}.jpeg"
             image.convert("RGB").save(dest, format="JPEG", quality=quality, optimize=True)
@@ -173,6 +186,16 @@ def build_parser() -> argparse.ArgumentParser:
             f"(bord de page scannée ; défaut: {DEFAULT_TOLERANCE})"
         ),
     )
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=None,
+        metavar="PX",
+        help=(
+            "Hauteur cible en pixels (proportions conservees). "
+            f"Sans cette option: pas de resize. Exemple: {DEFAULT_HEIGHT}"
+        ),
+    )
     return parser
 
 
@@ -202,6 +225,7 @@ def main(argv: list[str] | None = None) -> int:
                 quality=args.quality,
                 threshold=args.threshold,
                 tolerance=args.tolerance,
+                height=args.height,
             )
         except Exception:
             print(f"Erreur pendant la conversion de: {pdf_path}", file=sys.stderr)

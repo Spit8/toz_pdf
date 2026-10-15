@@ -59,7 +59,7 @@ rem Un seul PDF (chemin libre)
 run.bat document.pdf -o output
 
 rem Options
-run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 20
+run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 20 --height 890
 run.bat document.pdf -o output --tolerance 60
 ```
 
@@ -92,6 +92,7 @@ python3 convert.py input -o output --tolerance 20
 | `--quality` | Qualité JPEG (1–95) | `90` |
 | `--threshold` | Seuil de luminosité 0–255 pour détecter le contenu | `245` |
 | `--tolerance` | Ignore le contenu dans une bande de N px sur les bords (bord de scan) | `20` |
+| `--height` | Hauteur cible en px (proportions conservées). Absent = pas de resize | désactivé (ex. `890`) |
 
 Aide :
 
