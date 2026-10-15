@@ -59,26 +59,26 @@ rem Un seul PDF
 run.bat document.pdf -o output
 
 rem Options
-run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 40
+run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 20
 run.bat scan.pdf -o output --tolerance 60
 ```
 
 Avec le `.venv` :
 
 ```bat
-.venv\Scripts\python.exe convert.py input -o output --tolerance 40
+.venv\Scripts\python.exe convert.py input -o output --tolerance 20
 ```
 
 Sans `.venv` :
 
 ```bat
-python convert.py input -o output --tolerance 40
+python convert.py input -o output --tolerance 20
 ```
 
 Sous Linux / macOS :
 
 ```bash
-python3 convert.py input -o output --tolerance 40
+python3 convert.py input -o output --tolerance 20
 ```
 
 ## Options
@@ -91,7 +91,7 @@ python3 convert.py input -o output --tolerance 40
 | `--padding` | Marge (px) autour du contenu détecté | `8` |
 | `--quality` | Qualité JPEG (1–95) | `90` |
 | `--threshold` | Seuil de luminosité 0–255 pour détecter le contenu | `245` |
-| `--tolerance` | Ignore le contenu dans une bande de N px sur les bords (bord de scan) | `40` |
+| `--tolerance` | Ignore le contenu dans une bande de N px sur les bords (bord de scan) | `20` |
 
 Aide :
 
