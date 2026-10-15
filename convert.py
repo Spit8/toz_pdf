@@ -17,14 +17,27 @@ DEFAULT_THRESHOLD = 245
 DEFAULT_TOLERANCE = 40
 
 
-def find_default_pdf(root: Path) -> Path | None:
-    for folder in (root / "samples", root):
-        if not folder.is_dir():
-            continue
-        pdfs = sorted(folder.glob("*.pdf"))
-        if pdfs:
-            return pdfs[0]
-    return None
+def list_pdfs_in_dir(folder: Path) -> list[Path]:
+    return sorted(folder.glob("*.pdf"))
+
+
+def resolve_pdfs(source: Path | None, root: Path) -> list[Path]:
+    """Résout une liste de PDF depuis un dossier, un fichier, ou input/ par défaut."""
+    if source is None:
+        source = root / "input"
+
+    source = source.resolve()
+
+    if source.is_dir():
+        pdfs = list_pdfs_in_dir(source)
+        if not pdfs:
+            raise FileNotFoundError(f"Aucun PDF dans le dossier: {source}")
+        return pdfs
+
+    if source.is_file() and source.suffix.lower() == ".pdf":
+        return [source]
+
+    raise FileNotFoundError(f"Chemin invalide (dossier ou fichier .pdf attendu): {source}")
 
 
 def _clear_border(mask: Image.Image, tolerance: int) -> Image.Image:
@@ -113,20 +126,23 @@ def convert_pdf(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Convertit chaque page d'un PDF en JPEG et rogne les marges claires.",
+        description=(
+            "Convertit chaque page de PDF en JPEG et rogne les marges claires. "
+            "Accepte un fichier ou un dossier (tous les *.pdf)."
+        ),
     )
     parser.add_argument(
-        "pdf",
+        "source",
         nargs="?",
         type=Path,
-        help="Fichier PDF source (défaut: premier *.pdf dans samples/ ou à la racine)",
+        help="Fichier PDF ou dossier d'entrée (défaut: input/)",
     )
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
         default=None,
-        help="Dossier de sortie (défaut: output/<nom_du_pdf>/)",
+        help="Dossier parent de sortie (défaut: output/) ; un sous-dossier par PDF",
     )
     parser.add_argument("--dpi", type=int, default=DEFAULT_DPI, help=f"DPI de rendu (défaut: {DEFAULT_DPI})")
     parser.add_argument(
@@ -163,37 +179,32 @@ def main(argv: list[str] | None = None) -> int:
     root = Path(__file__).resolve().parent
     args = build_parser().parse_args(argv)
 
-    pdf_path = args.pdf
-    if pdf_path is None:
-        pdf_path = find_default_pdf(root)
-        if pdf_path is None:
-            print("Aucun PDF trouvé. Passez un chemin ou placez un fichier dans samples/.", file=sys.stderr)
-            return 1
-    else:
-        pdf_path = pdf_path.resolve()
-
-    if not pdf_path.is_file():
-        print(f"Fichier introuvable: {pdf_path}", file=sys.stderr)
+    try:
+        pdfs = resolve_pdfs(args.source, root)
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
         return 1
 
-    out_dir = args.output
-    if out_dir is None:
-        out_dir = root / "output" / pdf_path.stem
-    else:
-        out_dir = out_dir.resolve()
+    output_root = args.output.resolve() if args.output else (root / "output")
 
-    print(f"PDF : {pdf_path}")
-    print(f"Sortie : {out_dir}")
-    written = convert_pdf(
-        pdf_path,
-        out_dir,
-        dpi=args.dpi,
-        padding=args.padding,
-        quality=args.quality,
-        threshold=args.threshold,
-        tolerance=args.tolerance,
-    )
-    print(f"Terminé — {len(written)} page(s).")
+    total_pages = 0
+    for pdf_path in pdfs:
+        out_dir = output_root / pdf_path.stem
+        print(f"PDF : {pdf_path}")
+        print(f"Sortie : {out_dir}")
+        written = convert_pdf(
+            pdf_path,
+            out_dir,
+            dpi=args.dpi,
+            padding=args.padding,
+            quality=args.quality,
+            threshold=args.threshold,
+            tolerance=args.tolerance,
+        )
+        total_pages += len(written)
+        print(f"OK: {len(written)} page(s) pour '{pdf_path.stem}'\n")
+
+    print(f"Termine - {len(pdfs)} PDF, {total_pages} page(s) au total.")
     return 0
 
 

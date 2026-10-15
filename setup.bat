@@ -20,5 +20,5 @@ echo Installation des dependances ...
 if errorlevel 1 exit /b 1
 
 echo.
-echo Pret. Lancez: run.bat
+echo Pret. Placez vos PDF dans input\ puis lancez: convertir.bat
 endlocal

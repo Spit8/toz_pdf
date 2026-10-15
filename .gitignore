@@ -13,13 +13,16 @@ dist/
 build/
 *.egg
 
-# Documents / samples (données métier — ne jamais versionner)
+# Documents (données métier — ne jamais versionner)
+input/**
+!input/.gitkeep
 samples/**
 !samples/.gitkeep
 *.pdf
 
 # App outputs
-output/
+output/**
+!output/.gitkeep
 *.jpeg
 *.jpg
 

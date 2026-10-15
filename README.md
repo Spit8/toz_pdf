@@ -33,51 +33,60 @@ python3 -m pip install -r requirements.txt
 
 ## Utilisation
 
-### Via `run.bat` (utilise le `.venv`)
+### Usage rapide (Windows)
 
-```bat
-rem Premier PDF trouvé dans samples/ ou à la racine
-run.bat
+1. Lancez `setup.bat` une fois.
+2. Placez vos PDF dans le dossier `input/`.
+3. Double-cliquez `convertir.bat`.
 
-rem PDF explicite
-run.bat document.pdf
+Les JPEG sont écrits dans `output/<titre_du_pdf>/` :
 
-rem Options courantes
-run.bat document.pdf -o output\mon_export --dpi 200 --padding 8 --quality 90 --tolerance 40
-
-rem Scan avec bord de page visible (rogner plus agressivement)
-run.bat scan.pdf --tolerance 60
+```text
+input/rapport.pdf  →  output/rapport/page_001.jpeg …
+input/scan.pdf     →  output/scan/page_001.jpeg …
 ```
 
-### Via Python directement
+### Via Python / `run.bat`
+
+L’argument positionnel est un **fichier PDF** ou un **dossier**. Sans argument, tous les `*.pdf` de `input/` sont traités.
+
+```bat
+rem Tous les PDF de input/ vers output/
+run.bat
+run.bat input -o output
+
+rem Un seul PDF
+run.bat document.pdf -o output
+
+rem Options
+run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 40
+run.bat scan.pdf -o output --tolerance 60
+```
 
 Avec le `.venv` :
 
 ```bat
-.venv\Scripts\python.exe convert.py document.pdf -o output\mon_export --tolerance 40
+.venv\Scripts\python.exe convert.py input -o output --tolerance 40
 ```
 
 Sans `.venv` :
 
 ```bat
-python convert.py document.pdf -o output\mon_export --tolerance 40
+python convert.py input -o output --tolerance 40
 ```
 
 Sous Linux / macOS :
 
 ```bash
-python3 convert.py document.pdf -o output/mon_export --tolerance 40
+python3 convert.py input -o output --tolerance 40
 ```
-
-Sans argument PDF, le script prend le premier `*.pdf` trouvé dans `samples/` puis à la racine du projet.
-
-Les JPEG sont écrits dans `output/<nom_du_pdf>/` sous la forme `page_001.jpeg`, `page_002.jpeg`, …
 
 ## Options
 
 | Option | Description | Défaut |
 |--------|-------------|--------|
-| `-o`, `--output` | Dossier de sortie | `output/<nom_du_pdf>/` |
+| `source` | Fichier PDF ou dossier d’entrée | `input/` |
+| `-o`, `--output` | Dossier parent de sortie (un sous-dossier par PDF) | `output/` |
 | `--dpi` | Résolution de rendu | `200` |
 | `--padding` | Marge (px) autour du contenu détecté | `8` |
 | `--quality` | Qualité JPEG (1–95) | `90` |
@@ -99,4 +108,4 @@ Listées dans `requirements.txt`.
 
 ## Contenu non versionné
 
-Les PDF (ex. dans `samples/`), le dossier `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement pour tester, sans les committer.
+Les PDF dans `input/` (et `samples/` en local), le contenu de `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement, sans les committer.
