@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import traceback
 from pathlib import Path
 
 import pymupdf
@@ -192,15 +193,20 @@ def main(argv: list[str] | None = None) -> int:
         out_dir = output_root / pdf_path.stem
         print(f"PDF : {pdf_path}")
         print(f"Sortie : {out_dir}")
-        written = convert_pdf(
-            pdf_path,
-            out_dir,
-            dpi=args.dpi,
-            padding=args.padding,
-            quality=args.quality,
-            threshold=args.threshold,
-            tolerance=args.tolerance,
-        )
+        try:
+            written = convert_pdf(
+                pdf_path,
+                out_dir,
+                dpi=args.dpi,
+                padding=args.padding,
+                quality=args.quality,
+                threshold=args.threshold,
+                tolerance=args.tolerance,
+            )
+        except Exception:
+            print(f"Erreur pendant la conversion de: {pdf_path}", file=sys.stderr)
+            traceback.print_exc()
+            return 1
         total_pages += len(written)
         print(f"OK: {len(written)} page(s) pour '{pdf_path.stem}'\n")
 
@@ -209,4 +215,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except Exception:
+        traceback.print_exc()
+        raise SystemExit(1)

@@ -36,14 +36,14 @@ python3 -m pip install -r requirements.txt
 ### Usage rapide (Windows)
 
 1. Lancez `setup.bat` une fois.
-2. Placez vos PDF dans le dossier `input/`.
+2. Placez vos PDF dans le dossier `input/` (n’importe quels noms de fichiers `.pdf`).
 3. Double-cliquez `convertir.bat`.
 
-Les JPEG sont écrits dans `output/<titre_du_pdf>/` :
+Aucun nom de fichier n’est imposé : tous les `*.pdf` présents dans `input/` sont traités. Les JPEG sont écrits dans `output/<titre_du_pdf>/` :
 
 ```text
-input/rapport.pdf  →  output/rapport/page_001.jpeg …
-input/scan.pdf     →  output/scan/page_001.jpeg …
+input/rapport.pdf     →  output/rapport/page_001.jpeg …
+input/document.pdf    →  output/document/page_001.jpeg …
 ```
 
 ### Via Python / `run.bat`
@@ -55,12 +55,12 @@ rem Tous les PDF de input/ vers output/
 run.bat
 run.bat input -o output
 
-rem Un seul PDF
+rem Un seul PDF (chemin libre)
 run.bat document.pdf -o output
 
 rem Options
 run.bat input -o output --dpi 200 --padding 8 --quality 90 --tolerance 20
-run.bat scan.pdf -o output --tolerance 60
+run.bat document.pdf -o output --tolerance 60
 ```
 
 Avec le `.venv` :
