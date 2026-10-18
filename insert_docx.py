@@ -23,6 +23,27 @@ def list_images(folder: Path) -> list[Path]:
     return sorted(images, key=lambda p: p.name.lower())
 
 
+def list_docx_in_dir(folder: Path) -> list[Path]:
+    return sorted(folder.glob("*.docx"), key=lambda p: p.name.lower())
+
+
+def resolve_single_docx(folder: Path) -> Path:
+    """Retourne le unique .docx du dossier, ou lève FileNotFoundError / ValueError."""
+    if not folder.is_dir():
+        raise FileNotFoundError(f"Dossier .docx invalide: {folder}")
+
+    docxs = list_docx_in_dir(folder)
+    if len(docxs) == 0:
+        raise FileNotFoundError(f"Aucun fichier .docx dans le dossier: {folder}")
+    if len(docxs) >= 2:
+        names = ", ".join(p.name for p in docxs)
+        raise ValueError(
+            f"Plusieurs fichiers .docx dans {folder} ({len(docxs)}) : {names}. "
+            "Placez un seul .docx dans ce dossier."
+        )
+    return docxs[0]
+
+
 def insert_images(docx_path: Path, images: list[Path]) -> None:
     doc = Document(str(docx_path))
 
@@ -47,14 +68,15 @@ def insert_images(docx_path: Path, images: list[Path]) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Insère toutes les images d'un dossier à la fin d'un .docx "
-            "(une image par page, centrées, taille native). Écrase le fichier source."
+            "Insère toutes les images d'un dossier à la fin du unique .docx "
+            "présent dans un dossier d'entrée (une image par page, centrées, "
+            "taille native). Écrase le fichier source."
         ),
     )
     parser.add_argument(
-        "docx",
+        "docx_dir",
         type=Path,
-        help="Fichier Word .docx à modifier (écrasé)",
+        help="Dossier contenant exactement un fichier .docx (écrasé)",
     )
     parser.add_argument(
         "images",
@@ -67,11 +89,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
-    docx_path = args.docx.resolve()
+    docx_dir = args.docx_dir.resolve()
     images_dir = args.images.resolve()
 
-    if not docx_path.is_file() or docx_path.suffix.lower() != ".docx":
-        print(f"Fichier .docx invalide: {docx_path}", file=sys.stderr)
+    try:
+        docx_path = resolve_single_docx(docx_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
         return 1
 
     if not images_dir.is_dir():

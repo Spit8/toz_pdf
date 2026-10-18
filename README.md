@@ -109,6 +109,9 @@ Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’
 
 ### Comportement
 
+- Placez **exactement un** fichier `.docx` dans le dossier d’entrée (`input_docx/` par défaut).
+  - **0** fichier → erreur
+  - **≥2** fichiers → erreur (les noms trouvés sont listés)
 - Les images sont ajoutées **après le contenu existant** (saut de page avant la première).
 - **Une image par page**, **centrée**, **sans redimensionnement** (taille native selon le DPI de l’image).
 - Le fichier `.docx` source est **écrasé** (faites une copie avant si besoin).
@@ -118,15 +121,16 @@ Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’
 ### Usage rapide (Windows)
 
 1. Lancez `setup.bat` une fois (si ce n’est pas déjà fait).
-2. Préparez vos images, par exemple via `convertir.bat` → `output\<titre_du_pdf>\`.
-3. Éditez `Fabriquer_DOCX.bat` et renseignez les variables en tête :
+2. Placez **un seul** `.docx` dans `input_docx/`.
+3. Préparez vos images, par exemple via `convertir.bat` → `output\<titre_du_pdf>\`.
+4. Éditez `Fabriquer_DOCX.bat` si besoin (variable `IMAGES`) :
 
 ```bat
-set DOCX=document.docx
+set DOCX_DIR=input_docx
 set IMAGES=output\rapport
 ```
 
-4. Double-cliquez `Fabriquer_DOCX.bat`.
+5. Double-cliquez `Fabriquer_DOCX.bat`.
 
 Exemple de flux complet :
 
@@ -134,37 +138,38 @@ Exemple de flux complet :
 input/rapport.pdf
   → convertir.bat
   → output/rapport/page_001.jpeg …
-  → Fabriquer_DOCX.bat (DOCX=mon_modele.docx, IMAGES=output\rapport)
-  → mon_modele.docx (contenu d’origine + images en pages suivantes)
+input_docx/mon_modele.docx   (un seul .docx)
+  → Fabriquer_DOCX.bat (IMAGES=output\rapport)
+  → input_docx/mon_modele.docx (contenu d’origine + images en pages suivantes)
 ```
 
 ### Via Python
 
-Deux arguments positionnels : le **fichier `.docx`** puis le **dossier d’images**.
+Deux arguments positionnels : le **dossier du `.docx`** puis le **dossier d’images**.
 
 Avec le `.venv` :
 
 ```bat
-.venv\Scripts\python.exe insert_docx.py document.docx output\rapport
+.venv\Scripts\python.exe insert_docx.py input_docx output\rapport
 ```
 
 Sans `.venv` :
 
 ```bat
-python insert_docx.py document.docx output\rapport
+python insert_docx.py input_docx output\rapport
 ```
 
 Sous Linux / macOS :
 
 ```bash
-python3 insert_docx.py document.docx output/rapport
+python3 insert_docx.py input_docx output/rapport
 ```
 
 ### Arguments
 
 | Argument | Description |
 |----------|-------------|
-| `docx` | Fichier Word `.docx` à modifier (**écrasé** à la fin) |
+| `docx_dir` | Dossier contenant **exactement un** fichier `.docx` (**écrasé** à la fin) |
 | `images` | Dossier contenant les images à insérer |
 
 Aide :
@@ -183,4 +188,4 @@ Listées dans `requirements.txt`.
 
 ## Contenu non versionné
 
-Les PDF dans `input/` (et `samples/` en local), les `.docx` de travail, le contenu de `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement, sans les committer.
+Les PDF dans `input/`, les `.docx` dans `input_docx/` (et `samples/` en local), le contenu de `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement, sans les committer.

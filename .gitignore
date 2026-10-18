@@ -16,10 +16,13 @@ build/
 # Documents (données métier — ne jamais versionner)
 input/**
 !input/.gitkeep
+input_docx/**
+!input_docx/.gitkeep
 samples/**
 !samples/.gitkeep
 *.pdf
 !README.pdf
+*.docx
 
 # App outputs
 output/**
