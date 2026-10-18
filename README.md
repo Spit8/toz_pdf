@@ -1,6 +1,9 @@
-# PDF to JPEG
+# PDF → JPEG → Word
 
-Convertit chaque page d’un PDF en fichier `.jpeg`, puis rogne automatiquement les marges claires (y compris le bord sombre typique d’une page scannée).
+Deux outils complémentaires :
+
+1. **Conversion** : chaque page d’un PDF devient un `.jpeg`, avec rognage automatique des marges claires (y compris le bord sombre typique d’une page scannée).
+2. **Insertion Word** : les images d’un dossier sont ajoutées à la fin d’un fichier `.docx` existant.
 
 ## Prérequis
 
@@ -100,13 +103,84 @@ Aide :
 .venv\Scripts\python.exe convert.py --help
 ```
 
+## Insertion dans un Word (.docx)
+
+Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’images), ajoutez les images à la fin d’un fichier Word existant.
+
+### Comportement
+
+- Les images sont ajoutées **après le contenu existant** (saut de page avant la première).
+- **Une image par page**, **centrée**, **sans redimensionnement** (taille native selon le DPI de l’image).
+- Le fichier `.docx` source est **écrasé** (faites une copie avant si besoin).
+- Ordre d’insertion : **tri alphabétique** des noms de fichiers (compatible `page_001.jpeg`, `page_002.jpeg`, …).
+- Formats acceptés : `.jpeg`, `.jpg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`.
+
+### Usage rapide (Windows)
+
+1. Lancez `setup.bat` une fois (si ce n’est pas déjà fait).
+2. Préparez vos images, par exemple via `convertir.bat` → `output\<titre_du_pdf>\`.
+3. Éditez `Fabriquer_DOCX.bat` et renseignez les variables en tête :
+
+```bat
+set DOCX=document.docx
+set IMAGES=output\rapport
+```
+
+4. Double-cliquez `Fabriquer_DOCX.bat`.
+
+Exemple de flux complet :
+
+```text
+input/rapport.pdf
+  → convertir.bat
+  → output/rapport/page_001.jpeg …
+  → Fabriquer_DOCX.bat (DOCX=mon_modele.docx, IMAGES=output\rapport)
+  → mon_modele.docx (contenu d’origine + images en pages suivantes)
+```
+
+### Via Python
+
+Deux arguments positionnels : le **fichier `.docx`** puis le **dossier d’images**.
+
+Avec le `.venv` :
+
+```bat
+.venv\Scripts\python.exe insert_docx.py document.docx output\rapport
+```
+
+Sans `.venv` :
+
+```bat
+python insert_docx.py document.docx output\rapport
+```
+
+Sous Linux / macOS :
+
+```bash
+python3 insert_docx.py document.docx output/rapport
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `docx` | Fichier Word `.docx` à modifier (**écrasé** à la fin) |
+| `images` | Dossier contenant les images à insérer |
+
+Aide :
+
+```bat
+.venv\Scripts\python.exe insert_docx.py --help
+```
+
 ## Dépendances
 
 - [PyMuPDF](https://pymupdf.readthedocs.io/) — rendu des pages PDF
 - [Pillow](https://pillow.readthedocs.io/) — rognage et enregistrement JPEG
+- [python-docx](https://python-docx.readthedocs.io/) — insertion d’images dans un `.docx`
 
 Listées dans `requirements.txt`.
 
 ## Contenu non versionné
 
-Les PDF dans `input/` (et `samples/` en local), le contenu de `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement, sans les committer.
+Les PDF dans `input/` (et `samples/` en local), les `.docx` de travail, le contenu de `output/` et `.venv/` sont ignorés par Git : placez vos fichiers localement, sans les committer.
