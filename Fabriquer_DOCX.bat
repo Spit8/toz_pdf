@@ -26,7 +26,8 @@ if "%IMAGES%"=="" (
     exit /b 1
 )
 
-echo Insertion des images de "%IMAGES%" dans le .docx de "%DOCX_DIR%" ...
+echo Insertion des images de "%IMAGES%" a partir du .docx source de "%DOCX_DIR%" ...
+echo ^(sortie: *_images.docx — la source n'est pas modifiee^)
 ".venv\Scripts\python.exe" insert_docx.py "%DOCX_DIR%" "%IMAGES%"
 set ERR=%ERRORLEVEL%
 
@@ -34,7 +35,7 @@ echo.
 if not "%ERR%"=="0" (
     echo Echec de l'insertion ^(code %ERR%^). Voir le detail ci-dessus.
 ) else (
-    echo Termine. Fichier .docx ecrase dans: %DOCX_DIR%
+    echo Termine. Copie *_images.docx ecrite dans: %DOCX_DIR% ^(source intacte^)
 )
 pause
 exit /b %ERR%

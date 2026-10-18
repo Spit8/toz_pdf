@@ -109,12 +109,14 @@ Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’
 
 ### Comportement
 
-- Placez **exactement un** fichier `.docx` dans le dossier d’entrée (`input_docx/` par défaut).
-  - **0** fichier → erreur
-  - **≥2** fichiers → erreur (les noms trouvés sont listés)
+- Placez **exactement un** fichier `.docx` **source** dans `input_docx/` (par défaut).
+  - Les fichiers `*_images.docx` (copies générées) sont **ignorés** à la sélection.
+  - **0** source → erreur
+  - **≥2** sources → erreur (les noms trouvés sont listés)
+  - Source + `*_images.docx` déjà présent → **OK** (régénération en boucle possible)
 - Les images sont ajoutées **après le contenu existant** (saut de page avant la première).
 - **Une image par page**, **centrée**, **adaptée à la zone imprimable** (marges du document, proportions conservées, pas d’agrandissement).
-- Le fichier `.docx` source est **écrasé** (faites une copie avant si besoin).
+- La **source n’est jamais modifiée** : sortie = `{nom}_images.docx` (écrasée à chaque run).
 - Ordre d’insertion : **tri alphabétique** des noms de fichiers (compatible `page_001.jpeg`, `page_002.jpeg`, …).
 - Formats acceptés : `.jpeg`, `.jpg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`.
 
@@ -123,7 +125,7 @@ Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’
 ### Usage rapide (Windows)
 
 1. Lancez `setup.bat` une fois (si ce n’est pas déjà fait).
-2. Placez **un seul** `.docx` dans `input_docx/`.
+2. Placez **un seul** `.docx` source dans `input_docx/` (vous pouvez laisser l’ancienne `*_images.docx`).
 3. Préparez vos images, par exemple via `convertir.bat` → `output\<titre_du_pdf>\`.
 4. Éditez `Fabriquer_DOCX.bat` si besoin (variable `IMAGES`) :
 
@@ -132,7 +134,7 @@ set DOCX_DIR=input_docx
 set IMAGES=output\rapport
 ```
 
-5. Double-cliquez `Fabriquer_DOCX.bat`.
+5. Double-cliquez `Fabriquer_DOCX.bat` (autant de fois que nécessaire).
 
 Exemple de flux complet :
 
@@ -140,9 +142,9 @@ Exemple de flux complet :
 input/rapport.pdf
   → convertir.bat
   → output/rapport/page_001.jpeg …
-input_docx/mon_modele.docx   (un seul .docx)
+input_docx/mon_modele.docx          (source, intacte)
   → Fabriquer_DOCX.bat (IMAGES=output\rapport)
-  → input_docx/mon_modele.docx (contenu d’origine + images en pages suivantes)
+  → input_docx/mon_modele_images.docx   (copie avec images)
 ```
 
 ### Via Python
@@ -171,7 +173,7 @@ python3 insert_docx.py input_docx output/rapport
 
 | Argument | Description |
 |----------|-------------|
-| `docx_dir` | Dossier contenant **exactement un** fichier `.docx` (**écrasé** à la fin) |
+| `docx_dir` | Dossier contenant **exactement un** `.docx` source (`*_images.docx` ignorés) |
 | `images` | Dossier contenant les images à insérer |
 
 Aide :

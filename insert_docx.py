@@ -14,6 +14,7 @@ from docx.shared import Cm, Emu, Pt
 
 
 IMAGE_EXTENSIONS = {".jpeg", ".jpg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp"}
+OUTPUT_SUFFIX = "_images"
 
 # Marge de sécurité pour le paragraphe (évite un léger débordement vertical).
 _SAFETY = Cm(0.2)
@@ -32,21 +33,39 @@ def list_docx_in_dir(folder: Path) -> list[Path]:
     return sorted(folder.glob("*.docx"), key=lambda p: p.name.lower())
 
 
+def is_output_docx(path: Path) -> bool:
+    """True si le fichier est une copie générée (*_images.docx)."""
+    return path.stem.lower().endswith(OUTPUT_SUFFIX)
+
+
+def list_source_docx(folder: Path) -> list[Path]:
+    """Fichiers .docx sources (ignore les copies *_images)."""
+    return [p for p in list_docx_in_dir(folder) if not is_output_docx(p)]
+
+
+def output_path(source: Path) -> Path:
+    """Chemin de la copie avec images : {stem}_images.docx."""
+    return source.with_name(f"{source.stem}{OUTPUT_SUFFIX}{source.suffix}")
+
+
 def resolve_single_docx(folder: Path) -> Path:
-    """Retourne le unique .docx du dossier, ou lève FileNotFoundError / ValueError."""
+    """Retourne l'unique .docx source du dossier (ignore *_images)."""
     if not folder.is_dir():
         raise FileNotFoundError(f"Dossier .docx invalide: {folder}")
 
-    docxs = list_docx_in_dir(folder)
-    if len(docxs) == 0:
-        raise FileNotFoundError(f"Aucun fichier .docx dans le dossier: {folder}")
-    if len(docxs) >= 2:
-        names = ", ".join(p.name for p in docxs)
-        raise ValueError(
-            f"Plusieurs fichiers .docx dans {folder} ({len(docxs)}) : {names}. "
-            "Placez un seul .docx dans ce dossier."
+    sources = list_source_docx(folder)
+    if len(sources) == 0:
+        raise FileNotFoundError(
+            f"Aucun fichier .docx source dans le dossier: {folder} "
+            f"(les fichiers *{OUTPUT_SUFFIX}.docx sont ignorés)."
         )
-    return docxs[0]
+    if len(sources) >= 2:
+        names = ", ".join(p.name for p in sources)
+        raise ValueError(
+            f"Plusieurs fichiers .docx source dans {folder} ({len(sources)}) : {names}. "
+            f"Placez un seul modèle (les *{OUTPUT_SUFFIX}.docx sont autorisés en plus)."
+        )
+    return sources[0]
 
 
 def printable_area(section) -> tuple[Emu, Emu]:
@@ -67,8 +86,8 @@ def fitted_size(image_path: Path, max_w: Emu, max_h: Emu) -> tuple[Emu, Emu]:
     return Emu(int(native_w * scale)), Emu(int(native_h * scale))
 
 
-def insert_images(docx_path: Path, images: list[Path]) -> None:
-    doc = Document(str(docx_path))
+def insert_images(source_path: Path, out_path: Path, images: list[Path]) -> None:
+    doc = Document(str(source_path))
     max_w, max_h = printable_area(doc.sections[-1])
 
     # Démarrer après le contenu existant, sur une nouvelle page.
@@ -91,21 +110,25 @@ def insert_images(docx_path: Path, images: list[Path]) -> None:
         if index < total:
             doc.add_page_break()
 
-    doc.save(str(docx_path))
+    doc.save(str(out_path))
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Insère toutes les images d'un dossier à la fin du unique .docx "
-            "présent dans un dossier d'entrée (une image par page, centrées, "
-            "adaptées à la zone imprimable). Écrase le fichier source."
+            "Insère toutes les images d'un dossier à la fin du unique .docx source "
+            f"d'un dossier d'entrée (ignore *{OUTPUT_SUFFIX}.docx). Une image par page, "
+            "centrées, adaptées à la zone imprimable. Écrit une copie "
+            f"{{stem}}{OUTPUT_SUFFIX}.docx sans modifier la source."
         ),
     )
     parser.add_argument(
         "docx_dir",
         type=Path,
-        help="Dossier contenant exactement un fichier .docx (écrasé)",
+        help=(
+            "Dossier contenant exactement un .docx source "
+            f"(les *{OUTPUT_SUFFIX}.docx sont ignorés)"
+        ),
     )
     parser.add_argument(
         "images",
@@ -122,10 +145,12 @@ def main(argv: list[str] | None = None) -> int:
     images_dir = args.images.resolve()
 
     try:
-        docx_path = resolve_single_docx(docx_dir)
+        source_path = resolve_single_docx(docx_dir)
     except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    out_path = output_path(source_path)
 
     if not images_dir.is_dir():
         print(f"Dossier d'images invalide: {images_dir}", file=sys.stderr)
@@ -136,17 +161,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Aucune image dans le dossier: {images_dir}", file=sys.stderr)
         return 1
 
-    print(f"DOCX : {docx_path}")
+    print(f"Source : {source_path}")
+    print(f"Sortie : {out_path}")
     print(f"Images : {images_dir} ({len(images)} fichier(s))")
 
     try:
-        insert_images(docx_path, images)
+        insert_images(source_path, out_path, images)
     except Exception:
-        print(f"Erreur pendant l'insertion dans: {docx_path}", file=sys.stderr)
+        print(f"Erreur pendant l'insertion (sortie: {out_path})", file=sys.stderr)
         traceback.print_exc()
         return 1
 
-    print(f"OK: {len(images)} image(s) ajoutée(s), fichier écrasé.")
+    print(f"OK: {len(images)} image(s) ajoutée(s) → {out_path.name} (source intacte).")
     return 0
 
 
