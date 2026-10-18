@@ -90,12 +90,12 @@ python3 convert.py input -o output --tolerance 20
 |--------|-------------|--------|
 | `source` | Fichier PDF ou dossier d’entrée | `input/` |
 | `-o`, `--output` | Dossier parent de sortie (un sous-dossier par PDF) | `output/` |
-| `--dpi` | Résolution de rendu | `200` |
+| `--dpi` | Résolution de rendu **et** métadonnée DPI écrite dans le JPEG | `200` |
 | `--padding` | Marge (px) autour du contenu détecté | `8` |
 | `--quality` | Qualité JPEG (1–95) | `90` |
 | `--threshold` | Seuil de luminosité 0–255 pour détecter le contenu | `245` |
 | `--tolerance` | Ignore le contenu dans une bande de N px sur les bords (bord de scan) | `20` |
-| `--height` | Hauteur cible en px (proportions conservées). Absent = pas de resize | désactivé (ex. `890`) |
+| `--height` | Hauteur cible en px (proportions conservées). Absent = pas de resize. Pour Word : garder une valeur haute (ex. `890`) — la taille page est gérée à l’insertion, ne pas baisser pour « rentrer » | désactivé (ex. `890`) |
 
 Aide :
 
@@ -113,10 +113,12 @@ Après la conversion PDF → JPEG (ou à partir de n’importe quel dossier d’
   - **0** fichier → erreur
   - **≥2** fichiers → erreur (les noms trouvés sont listés)
 - Les images sont ajoutées **après le contenu existant** (saut de page avant la première).
-- **Une image par page**, **centrée**, **sans redimensionnement** (taille native selon le DPI de l’image).
+- **Une image par page**, **centrée**, **adaptée à la zone imprimable** (marges du document, proportions conservées, pas d’agrandissement).
 - Le fichier `.docx` source est **écrasé** (faites une copie avant si besoin).
 - Ordre d’insertion : **tri alphabétique** des noms de fichiers (compatible `page_001.jpeg`, `page_002.jpeg`, …).
 - Formats acceptés : `.jpeg`, `.jpg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`.
+
+**Netteté :** ne baissez pas `--height` pour faire rentrer les images dans Word (cela floute). Gardez par ex. `DPI=200` et `HEIGHT=890` dans `convertir.bat` ; `insert_docx.py` réduit l’affichage à la page.
 
 ### Usage rapide (Windows)
 

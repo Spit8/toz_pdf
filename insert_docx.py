@@ -9,9 +9,14 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.image.image import Image as DocxImage
+from docx.shared import Cm, Emu, Pt
 
 
 IMAGE_EXTENSIONS = {".jpeg", ".jpg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp"}
+
+# Marge de sécurité pour le paragraphe (évite un léger débordement vertical).
+_SAFETY = Cm(0.2)
 
 
 def list_images(folder: Path) -> list[Path]:
@@ -44,20 +49,44 @@ def resolve_single_docx(folder: Path) -> Path:
     return docxs[0]
 
 
+def printable_area(section) -> tuple[Emu, Emu]:
+    """Zone utile de la page (largeur × hauteur), hors marges."""
+    max_w = section.page_width - section.left_margin - section.right_margin
+    max_h = section.page_height - section.top_margin - section.bottom_margin - _SAFETY
+    if max_w <= 0 or max_h <= 0:
+        raise ValueError("Zone imprimable invalide (marges trop grandes pour la page).")
+    return Emu(int(max_w)), Emu(int(max_h))
+
+
+def fitted_size(image_path: Path, max_w: Emu, max_h: Emu) -> tuple[Emu, Emu]:
+    """Taille d'affichage : tient dans max_w×max_h, ratio conservé, pas d'upscale."""
+    img = DocxImage.from_file(str(image_path))
+    native_w = float(img.width)
+    native_h = float(img.height)
+    scale = min(float(max_w) / native_w, float(max_h) / native_h, 1.0)
+    return Emu(int(native_w * scale)), Emu(int(native_h * scale))
+
+
 def insert_images(docx_path: Path, images: list[Path]) -> None:
     doc = Document(str(docx_path))
+    max_w, max_h = printable_area(doc.sections[-1])
 
     # Démarrer après le contenu existant, sur une nouvelle page.
     doc.add_page_break()
 
     total = len(images)
     for index, image_path in enumerate(images, start=1):
+        width, height = fitted_size(image_path, max_w, max_h)
+
         paragraph = doc.add_paragraph()
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+        paragraph.paragraph_format.line_spacing = 1.0
+
         run = paragraph.add_run()
-        # Sans width/height : taille native (DPI de l'image).
-        run.add_picture(str(image_path))
-        print(f"[{index}/{total}] {image_path.name}")
+        run.add_picture(str(image_path), width=width, height=height)
+        print(f"[{index}/{total}] {image_path.name} ({width.cm:.2f}x{height.cm:.2f} cm)")
 
         if index < total:
             doc.add_page_break()
@@ -70,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Insère toutes les images d'un dossier à la fin du unique .docx "
             "présent dans un dossier d'entrée (une image par page, centrées, "
-            "taille native). Écrase le fichier source."
+            "adaptées à la zone imprimable). Écrase le fichier source."
         ),
     )
     parser.add_argument(

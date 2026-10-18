@@ -131,7 +131,13 @@ def convert_pdf(
                 image = resize_to_height(image, height)
 
             dest = out_dir / f"page_{index:03d}.jpeg"
-            image.convert("RGB").save(dest, format="JPEG", quality=quality, optimize=True)
+            image.convert("RGB").save(
+                dest,
+                format="JPEG",
+                quality=quality,
+                optimize=True,
+                dpi=(dpi, dpi),
+            )
             written.append(dest)
             print(f"[{index}/{total}] {dest.name} ({image.width}x{image.height})")
 
